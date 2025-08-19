@@ -1,0 +1,28 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/offer-pages || git clone git@github.com:erge-lgtm/deng-lu-ye-.git /home/ubuntu/offer-pages
+            git pull origin main
+            sudo rsync -av --delete /home/ubuntu/offer-pages/'241 - 副本' /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html/'241 - 副本'
+            sudo chmod -R 755 /var/www/html/'241 - 副本'
+            sudo nginx -t
+            sudo systemctl restart nginx
